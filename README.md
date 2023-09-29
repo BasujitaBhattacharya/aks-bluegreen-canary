@@ -18,14 +18,17 @@
 
 ### Prerequisites
 * Any Kubernetes cluster 1.3+ should work. Create an [AKS Cluster](https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough) using [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/):
+
+
 ```
-az aks create --resource-group myResourceGroup --name myAKSCluster --node-count 1 --enable-addons monitoring --generate-ssh-keys
+az group create --name rg-bg-aks-demo --location canadacentral
+az aks create --resource-group rg-bg-aks-demo --name bGAKSDemoCluster --node-count 1 --enable-addons monitoring --generate-ssh-keys
 ```
 Connect, Start and Stop AKS Cluster using [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/aks/cluster?view=azure-cli-latest):
 ```
-az aks get-credentials --resource-group myResourceGroup --name myAKSCluster
-az aks start --name myAKSCluster --resource-group myResourceGroup
-az aks stop --name myAKSCluster --resource-group myResourceGroup
+az aks get-credentials --resource-group rg-bg-aks-demo --name bGAKSDemoCluster
+az aks start --name bGAKSDemoCluster --resource-group rg-bg-aks-demo
+az aks stop --name bGAKSDemoCluster --resource-group rg-bg-aks-demo
 ```
 * Application source code
 * Docker image of the application
@@ -50,17 +53,22 @@ CMD ["nginx", "-g", "daemon off;"]
 
 Build docker image using below command, e.g.:
 ```
-docker build -t demo.azurecr.io/blue-nginx:1 .
+docker build -t bgdemo.azurecr.io/blue-nginx:1 .
 ```
 ```
-docker build -t demo.azurecr.io/green-nginx:1 .
+docker build -t bgdemo.azurecr.io/green-nginx:1 .
 ```
-Upload the docker image to ACR/DockerHub (we are using ACR):
+Login to ACR
 ```
-docker push demo.azurecr.io/blue-nginx:1
+az acr login --name bgdemo
+```
+
+Upload the docker image to ACR/DockerHub (we are using ACR, bgdemo.azurecr.io that I have created in my subscription):
+```
+docker push bgdemo.azurecr.io/blue-nginx:1
 ```
 ```
-docker push demo.azurecr.io/green-nginx:1
+docker push bgdemo.azurecr.io/green-nginx:1
 ```
 ---
 2. **Create Kubernetes manifest files in `/kubernetes`:**
@@ -82,7 +90,7 @@ spec:
     spec:
       containers: 
         - name: nginx
-          image: demogaurav.azurecr.io/blue-nginx:1
+          image: bgdemo.azurecr.io/blue-nginx:1
           ports:
             - name: http
               containerPort: 80
@@ -112,7 +120,7 @@ spec:
     spec:
       containers: 
         - name: nginx
-          image: demogaurav.azurecr.io/green-nginx:1
+          image: bgdemo.azurecr.io/green-nginx:1
           ports:
             - name: http
               containerPort: 80
@@ -160,11 +168,11 @@ on:
   workflow_dispatch:
 
 env:
-  ACR_NAME: demogaurav.azurecr.io
-  ACR_REPO_NAME: demogaurav.azurecr.io/docker-java-app
+  ACR_NAME: bgdemo.azurecr.io
+  ACR_REPO_NAME: bgdemo.azurecr.io/docker-java-app
   ARTIFACT_NAME: docker-java-app
-  RESOURCE_GROUP: Gaurav-RG
-  AKS_CLUSTER_NAME: Gaurav-AKS-cluster
+  RESOURCE_GROUP: Rg-bg-aks-demo
+  AKS_CLUSTER_NAME: BGAKSDemoCluster
   
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -195,7 +203,7 @@ jobs:
             ./kubernetes/service.yaml
             ./kubernetes/blue-deploy.yaml
           images: |
-            demogaurav.azurecr.io/green-nginx:1
+            bgdemo.azurecr.io/green-nginx:1
           strategy: blue-green
           traffic-split-method: pod
           action: deploy  #deploy is the default; we will later use this to promote/reject
@@ -229,7 +237,7 @@ jobs:
             ./kubernetes/service.yaml
             ./kubernetes/green-deploy.yaml
           images: |
-            demogaurav.azurecr.io/green-nginx:1
+            bgdemo.azurecr.io/green-nginx:1
           strategy: blue-green
           traffic-split-method: pod
           action: promote  #deploy is the default; we will later use this to promote/reject
@@ -243,7 +251,7 @@ jobs:
             ./kubernetes/service.yaml
             ./kubernetes/blue-deploy.yaml
           images: |
-            demogaurav.azurecr.io/green-nginx:1
+            bgdemo.azurecr.io/green-nginx:1
           strategy: blue-green
           traffic-split-method: pod
           action: reject  #deploy is the default; we will later use this to promote/reject
@@ -269,11 +277,11 @@ on:
   workflow_dispatch:
 
 env:
-  ACR_NAME: demogaurav.azurecr.io
-  ACR_REPO_NAME: demogaurav.azurecr.io/docker-java-app
+  ACR_NAME: bgdemo.azurecr.io
+  ACR_REPO_NAME: bgdemo.azurecr.io/docker-java-app
   ARTIFACT_NAME: docker-java-app
-  RESOURCE_GROUP: Gaurav-RG
-  AKS_CLUSTER_NAME: Gaurav-AKS-cluster
+  RESOURCE_GROUP: Rg-bg-aks-demo
+  AKS_CLUSTER_NAME: BGAKSDemoCluster
   
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -302,7 +310,7 @@ jobs:
             ./kubernetes/service.yaml
             ./kubernetes/blue-deploy.yaml
           images: |
-            demogaurav.azurecr.io/green-nginx:1
+            bgdemo.azurecr.io/green-nginx:1
           strategy: canary
           traffic-split-method: pod
           action: deploy  #deploy is the default; we will later use this to promote/reject
@@ -338,7 +346,7 @@ jobs:
             ./kubernetes/service.yaml
             ./kubernetes/green-deploy.yaml
           images: |
-            demogaurav.azurecr.io/green-nginx:1
+            bgdemo.azurecr.io/green-nginx:1
           strategy: canary
           traffic-split-method: pod
           action: promote  #deploy is the default; we will later use this to promote/reject
@@ -354,7 +362,7 @@ jobs:
             ./kubernetes/service.yaml
             ./kubernetes/blue-deploy.yaml
           images: |
-            demogaurav.azurecr.io/green-nginx:1
+            bgdemo.azurecr.io/green-nginx:1
           strategy: canary
           traffic-split-method: pod
           action: reject  #deploy is the default; we will later use this to promote/reject
