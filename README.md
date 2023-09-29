@@ -152,8 +152,10 @@ spec:
 ---
 3. **Create  a service principal and Add that as GitHub Secret**
 
-[Follow Steps from here](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Cwindows)
-
+* [Follow Steps from here](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Cwindows)
+```
+az ad sp create-for-rbac --name "bgAksApp" --role contributor  --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} 
+```
 ---
 
 4. **Create GitHub Actions workflow in `/.github/workflows`:**
