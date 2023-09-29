@@ -150,7 +150,13 @@ spec:
   type: LoadBalancer
 ```
 ---
-3. **Create GitHub Actions workflow in `/.github/workflows`:**
+3. **Create  a service principal and Add that as GitHub Secret**
+
+(Follow Steps from here)[https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Cwindows]
+
+---
+
+4. **Create GitHub Actions workflow in `/.github/workflows`:**
 * For Blue/Green deployment, create `blue-green.yaml` file:
 ```yml
 # This is a basic workflow to help you get started with Actions
@@ -374,7 +380,7 @@ jobs:
 | *Canary Deployment Workflow* |
 
 ---
-4. **Run the `blue-green-strategy` workflow:**
+5. **Run the `blue-green-strategy` workflow:**
 * | *Deployapp* |
   | :--: |
   | ![deployapp](https://github.com/gauravthakur02/action-deployments/blob/3ee4eb928fa43851e3d27c4f6c39f279f85c2968/img/blue-green/deployapp.png) |
